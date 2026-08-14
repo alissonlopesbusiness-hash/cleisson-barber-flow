@@ -286,8 +286,14 @@ function BookingPage() {
 
           <button
             onClick={() => {
-              if (nome.trim().length < 3) return toast.error("Informe seu nome completo.");
-              if (telefone.replace(/\D/g, "").length < 10) return toast.error("Informe um WhatsApp válido.");
+              if (nome.trim().length < 3) {
+                toast.error("Informe seu nome completo.");
+                return;
+              }
+              if (telefone.replace(/\D/g, "").length < 10) {
+                toast.error("Informe um WhatsApp válido.");
+                return;
+              }
               setStep(5);
             }}
             className="mt-6 flex h-14 w-full items-center justify-center rounded-full bg-primary text-sm font-bold tracking-widest text-primary-foreground"
