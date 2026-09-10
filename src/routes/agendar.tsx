@@ -3,13 +3,15 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Check, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAvailability, createGuestBooking } from "@/lib/booking.functions";
 import { createMyBooking, getMyAccount } from "@/lib/account.functions";
-import { Logo, Screen, Loading, EmptyState } from "@/components/app/shell";
+import { Logo, Screen, Loading, EmptyState, StepHeader, SectionHeading } from "@/components/app/shell";
+import { MonthCalendar } from "@/components/app/month-calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { brl, todayISO, formatDateBR, weekdayName, addMinutes, dateToISO } from "@/lib/date";
+import { brl, todayISO, formatDateBR, weekdayName, addMinutes } from "@/lib/date";
 import { bookingMessage } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
@@ -25,13 +27,7 @@ export const Route = createFileRoute("/agendar")({
   component: BookingPage,
 });
 
-function nextDays(count: number) {
-  const base = new Date();
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
-    return dateToISO(d);
-  });
-}
+const STEP_LABEL = ["Serviço", "Data", "Horário", "Seus dados", "Confirmação"];
 
 function BookingPage() {
   const navigate = useNavigate();
@@ -119,142 +115,129 @@ function BookingPage() {
 
   if (done) {
     return (
-      <Screen className="pb-10">
-        <div className="flex flex-col items-center pt-10 text-center">
-          <Logo className="w-32" />
-          <h1 className="mt-8 text-3xl font-semibold text-gold">AGENDAMENTO CONFIRMADO</h1>
-          <div className="panel mt-6 w-full space-y-2 p-5 text-left text-sm">
-            <p>✓ {service?.nome}</p>
-            <p>✓ {formatDateBR(date)}</p>
-            <p>✓ {time} — {time ? addMinutes(time, 30) : ""}</p>
+      <Screen className="pb-14">
+        <div className="flex flex-col items-center text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-full border border-gold text-gold">
+            <Check className="h-7 w-7" />
           </div>
-          <p className="mt-5 text-sm text-muted-foreground">Seu horário foi reservado com sucesso.</p>
-          <Link
-            to={signedIn ? "/conta" : "/entrar"}
-            className="mt-8 flex h-14 w-full items-center justify-center rounded-full bg-primary text-sm font-bold tracking-widest text-primary-foreground"
-          >
-            VER MEU AGENDAMENTO
+          <p className="eyebrow mt-6">Tudo certo</p>
+          <h1 className="mt-2 text-[2.2rem] leading-none">
+            Horário <span className="italic text-gold">confirmado</span>
+          </h1>
+
+          <div className="panel mt-7 w-full space-y-3 p-5 text-left text-sm">
+            <Row label="Serviço" value={service?.nome ?? ""} />
+            <Row label="Data" value={formatDateBR(date)} />
+            <Row label="Horário" value={`${time} — ${time ? addMinutes(time, 30) : ""}`} />
+          </div>
+
+          <Link to={signedIn ? "/conta" : "/entrar"} className="action-primary focus-ring mt-7 w-full">
+            Ver meu agendamento
           </Link>
-          <Link to="/" className="mt-4 text-sm text-muted-foreground">
+          <Link to="/" className="focus-ring mt-4 inline-flex h-11 items-center text-sm text-muted-foreground">
             Voltar ao início
           </Link>
+          <Logo className="mt-8 h-14 w-14 opacity-50" />
         </div>
       </Screen>
     );
   }
 
   return (
-    <Screen className="pb-16">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          onClick={() => (step === 1 ? navigate({ to: "/" }) : setStep(step - 1))}
-          className="text-sm text-muted-foreground"
-        >
-          ← Voltar
-        </button>
-        <span className="eyebrow">Etapa {step} de 5</span>
-      </div>
+    <Screen className="pb-14">
+      <StepHeader step={step} total={5} onBack={() => (step === 1 ? navigate({ to: "/" }) : setStep(step - 1))} />
+
+      <p className="eyebrow">Etapa {step} de 5</p>
+      <h1 className="mt-2 mb-6 text-[2.1rem] leading-none">{STEP_LABEL[step - 1]}</h1>
 
       {step === 1 ? (
-        <section>
-          <h1 className="text-2xl font-semibold">Escolha o serviço</h1>
-          <div className="mt-4 space-y-3">
-            {loadingServices ? (
-              <Loading />
-            ) : (
-              (services ?? []).map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => {
-                    setServiceId(s.id);
-                    setStep(2);
-                  }}
-                  className={cn(
-                    "panel flex w-full items-center justify-between p-4 text-left transition-colors",
-                    serviceId === s.id && "border-gold",
-                  )}
-                >
-                  <span className="text-base font-medium">{s.nome}</span>
-                  <span className="font-display text-xl text-gold">{brl(s.preco)}</span>
-                </button>
-              ))
-            )}
-          </div>
+        <section className="space-y-3">
+          {loadingServices ? (
+            <Loading />
+          ) : (
+            (services ?? []).map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  setServiceId(s.id);
+                  setStep(2);
+                }}
+                className={cn(
+                  "panel focus-ring flex w-full items-center gap-3 p-4 text-left",
+                  serviceId === s.id && "border-gold",
+                )}
+              >
+                <span className="min-w-0 flex-1 truncate text-base">{s.nome}</span>
+                <span className="font-display text-xl text-gold">{brl(s.preco)}</span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </button>
+            ))
+          )}
         </section>
       ) : null}
 
       {step === 2 ? (
         <section>
-          <h1 className="text-2xl font-semibold">Escolha a data</h1>
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            {nextDays(21).map((d) => (
-              <button
-                key={d}
-                onClick={() => {
-                  setDate(d);
-                  setTime(null);
-                  setStep(3);
-                }}
-                className={cn(
-                  "panel px-2 py-3 text-center",
-                  date === d && "border-gold",
-                )}
-              >
-                <p className="text-[0.65rem] uppercase tracking-widest text-muted-foreground">
-                  {weekdayName(d).slice(0, 3)}
-                </p>
-                <p className="mt-1 font-display text-xl text-gold">{d.slice(8)}</p>
-                <p className="text-[0.65rem] text-muted-foreground">{d.slice(5, 7)}</p>
-              </button>
-            ))}
-          </div>
+          <MonthCalendar
+            value={date}
+            onSelect={(iso) => {
+              setDate(iso);
+              setTime(null);
+              setStep(3);
+            }}
+          />
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Toque em um dia para ver os horários livres.
+          </p>
         </section>
       ) : null}
 
       {step === 3 ? (
         <section>
-          <h1 className="text-2xl font-semibold">Escolha o horário</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="-mt-4 mb-5 text-sm text-muted-foreground">
             {weekdayName(date)}, {formatDateBR(date)}
           </p>
-          <div className="mt-4">
-            {loadingSlots ? (
-              <Loading rows={2} />
-            ) : availability?.closed ? (
-              <EmptyState title="Fechado" description="A barbearia não atende nesta data." />
-            ) : availability?.slots.every((s) => !s.available) ? (
-              <EmptyState title="Sem horários" description="Escolha outra data." />
-            ) : (
-              <div className="grid grid-cols-4 gap-2">
-                {(availability?.slots ?? []).map((s) => (
-                  <button
-                    key={s.time}
-                    disabled={!s.available}
-                    onClick={() => {
-                      setTime(s.time);
-                      setStep(4);
-                    }}
-                    className={cn(
-                      "rounded-xl border py-3 text-sm font-medium transition-colors",
-                      s.available
-                        ? "border-gold/25 bg-surface text-foreground"
-                        : "cursor-not-allowed border-border bg-secondary/40 text-muted-foreground/50 line-through",
-                      time === s.time && "border-gold bg-primary text-primary-foreground",
-                    )}
-                  >
-                    {s.time}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {loadingSlots ? (
+            <Loading rows={2} />
+          ) : availability?.closed ? (
+            <EmptyState title="Fechado" description="A barbearia não atende nesta data." />
+          ) : availability?.slots.every((s) => !s.available) ? (
+            <EmptyState title="Sem horários" description="Escolha outra data." />
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {(availability?.slots ?? []).map((s) => (
+                <button
+                  key={s.time}
+                  disabled={!s.available}
+                  onClick={() => {
+                    setTime(s.time);
+                    setStep(4);
+                  }}
+                  className={cn(
+                    "focus-ring rounded-md border py-3 text-sm tabular-nums transition-colors",
+                    s.available
+                      ? "border-border text-foreground"
+                      : "cursor-not-allowed border-transparent bg-secondary/40 text-muted-foreground/40 line-through",
+                    time === s.time && "border-gold bg-primary font-semibold text-primary-foreground",
+                  )}
+                >
+                  {s.time}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setStep(2)}
+            className="focus-ring mt-6 w-full text-center text-sm text-gold"
+          >
+            Escolher outra data
+          </button>
         </section>
       ) : null}
 
       {step === 4 ? (
         <section>
-          <h1 className="text-2xl font-semibold">Seus dados</h1>
-          <div className="panel mt-4 space-y-4 p-5">
+          <div className="panel space-y-4 p-5">
             <div className="space-y-2">
               <Label htmlFor="n">Nome completo</Label>
               <Input id="n" value={nome} onChange={(e) => setNome(e.target.value)} className="h-12" />
@@ -274,13 +257,23 @@ function BookingPage() {
           {podeUsarAssinatura ? (
             <button
               onClick={() => setUsarAssinatura(!usarAssinatura)}
-              className={cn("panel mt-4 flex w-full items-center justify-between p-4 text-left", usarAssinatura && "border-gold")}
+              className={cn(
+                "panel focus-ring mt-4 flex w-full items-center justify-between gap-3 p-4 text-left",
+                usarAssinatura && "border-gold",
+              )}
             >
-              <span>
-                <span className="block text-sm font-semibold text-gold">USAR BENEFÍCIO DA ASSINATURA</span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-gold">Usar benefício da assinatura</span>
                 <span className="text-xs text-muted-foreground">{sub?.plano}</span>
               </span>
-              <span className={cn("h-5 w-5 rounded-full border", usarAssinatura ? "border-gold bg-primary" : "border-border")} />
+              <span
+                className={cn(
+                  "grid h-6 w-6 shrink-0 place-items-center rounded-full border",
+                  usarAssinatura ? "border-gold bg-primary text-primary-foreground" : "border-border",
+                )}
+              >
+                {usarAssinatura ? <Check className="h-3.5 w-3.5" /> : null}
+              </span>
             </button>
           ) : null}
 
@@ -296,31 +289,34 @@ function BookingPage() {
               }
               setStep(5);
             }}
-            className="mt-6 flex h-14 w-full items-center justify-center rounded-full bg-primary text-sm font-bold tracking-widest text-primary-foreground"
+            className="action-primary focus-ring mt-6 w-full"
           >
-            CONTINUAR
+            Continuar
           </button>
         </section>
       ) : null}
 
       {step === 5 ? (
         <section>
-          <h1 className="text-2xl font-semibold">Seu agendamento</h1>
-          <div className="panel mt-4 space-y-3 p-5 text-sm">
+          <SectionHeading label="Resumo" />
+          <div className="panel space-y-3 p-5 text-sm">
             <Row label="Serviço" value={service?.nome ?? ""} />
-            <Row label="Data" value={formatDateBR(date)} />
+            <Row label="Data" value={`${weekdayName(date)}, ${formatDateBR(date)}`} />
             <Row label="Horário" value={`${time} — ${time ? addMinutes(time, 30) : ""}`} />
-            <Row
-              label="Valor"
-              value={usarAssinatura && podeUsarAssinatura ? "Assinatura" : brl(Number(service?.preco ?? 0))}
-            />
+            <Row label="Cliente" value={nome} />
+            <div className="border-t border-border/70 pt-3">
+              <Row
+                label="Valor"
+                value={usarAssinatura && podeUsarAssinatura ? "Assinatura" : brl(Number(service?.preco ?? 0))}
+              />
+            </div>
           </div>
           <button
             disabled={confirm.isPending}
             onClick={() => confirm.mutate()}
-            className="mt-6 flex h-14 w-full items-center justify-center rounded-full bg-primary text-sm font-bold tracking-widest text-primary-foreground disabled:opacity-60"
+            className="action-primary focus-ring mt-6 w-full"
           >
-            {confirm.isPending ? "CONFIRMANDO..." : "CONFIRMAR AGENDAMENTO"}
+            {confirm.isPending ? "Confirmando..." : "Confirmar agendamento"}
           </button>
         </section>
       ) : null}
@@ -330,9 +326,9 @@ function BookingPage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+    <div className="flex items-start justify-between gap-4">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 text-right font-medium text-foreground">{value}</span>
     </div>
   );
 }
