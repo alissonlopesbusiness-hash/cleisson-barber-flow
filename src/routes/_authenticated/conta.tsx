@@ -4,8 +4,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CalendarDays, Home, Scissors, Star, User } from "lucide-react";
 import { getMyAccount, cancelMyAppointment } from "@/lib/account.functions";
-import { Screen, PageTitle, Loading, EmptyState, StatusBadge, BottomNav } from "@/components/app/shell";
-import { brl, formatDateBR, hhmm } from "@/lib/date";
+import {
+  Screen,
+  PageTitle,
+  Loading,
+  EmptyState,
+  StatusBadge,
+  BottomNav,
+  SectionHeading,
+} from "@/components/app/shell";
+import { brl, formatDateBR, hhmm, addMinutes, weekdayName } from "@/lib/date";
 import { bookingMessage } from "@/lib/messages";
 
 export const Route = createFileRoute("/_authenticated/conta")({
@@ -52,59 +60,90 @@ function ContaPage() {
   });
 
   const proximos = (data?.appointments ?? []).filter((a) => a.status === "agendado" || a.status === "confirmado");
+  const [next, ...outros] = proximos;
   const anteriores = (data?.appointments ?? []).filter((a) => a.status === "concluido" || a.status === "cancelado");
 
   return (
     <>
       <Screen>
-        <PageTitle eyebrow={`Olá, ${data?.nome ?? ""}`} title="Meus horários" />
+        <PageTitle eyebrow={data?.nome ? `Olá, ${data.nome.split(" ")[0]}` : "Área do cliente"} title="Meus horários" />
+
         {data?.isAdmin ? (
-          <Link to="/admin" className="panel mb-5 block p-4 text-sm font-semibold text-gold">
+          <Link to="/admin" className="panel focus-ring mb-6 block p-4 text-sm font-semibold text-gold">
             Abrir painel do barbeiro →
           </Link>
         ) : null}
 
         {isLoading ? (
           <Loading />
-        ) : proximos.length === 0 ? (
+        ) : !next ? (
           <EmptyState title="Nenhum horário marcado" description="Agende seu próximo atendimento." />
         ) : (
-          <div className="space-y-3">
-            {proximos.map((a) => (
-              <div key={a.id} className="panel p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-display text-2xl text-gold">{hhmm(a.hora_inicio)}</p>
-                    <p className="text-sm font-medium">{a.servico}</p>
-                    <p className="text-xs text-muted-foreground">{formatDateBR(a.data)}</p>
-                  </div>
-                  <StatusBadge status={a.status} />
+          <>
+            <SectionHeading label="Próximo atendimento" />
+            <div className="panel p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display text-4xl leading-none text-gold">{hhmm(next.hora_inicio)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    até {addMinutes(hhmm(next.hora_inicio), 30)}
+                  </p>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {a.tipo_atendimento === "assinatura" ? "Assinatura" : brl(Number(a.preco))}
-                  </span>
+                <StatusBadge status={next.status} />
+              </div>
+              <p className="mt-4 truncate text-base">{next.servico}</p>
+              <p className="text-sm text-muted-foreground">
+                {weekdayName(next.data)}, {formatDateBR(next.data)}
+              </p>
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/70 pt-4">
+                <span className="text-sm text-muted-foreground">
+                  {next.tipo_atendimento === "assinatura" ? "Assinatura" : brl(Number(next.preco))}
+                </span>
+                <button
+                  onClick={() => cancel.mutate(next.id)}
+                  disabled={cancel.isPending}
+                  className="focus-ring rounded-full border border-destructive/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-destructive"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {outros.length > 0 ? (
+          <section className="mt-9">
+            <SectionHeading label="Também agendados" />
+            <div className="space-y-3">
+              {outros.map((a) => (
+                <div key={a.id} className="panel flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm">{a.servico}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateBR(a.data)} · {hhmm(a.hora_inicio)}
+                    </p>
+                  </div>
                   <button
                     onClick={() => cancel.mutate(a.id)}
                     disabled={cancel.isPending}
-                    className="rounded-full border border-destructive/40 px-4 py-2 text-xs font-semibold text-destructive"
+                    className="focus-ring shrink-0 rounded-full border border-destructive/40 px-3 py-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-destructive"
                   >
-                    CANCELAR
+                    Cancelar
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {anteriores.length > 0 ? (
-          <section className="mt-8">
-            <p className="eyebrow">Histórico</p>
-            <div className="panel mt-3 divide-y divide-border">
+          <section className="mt-9">
+            <SectionHeading label="Histórico" />
+            <div className="panel divide-y divide-border/70">
               {anteriores.map((a) => (
-                <div key={a.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                  <div>
-                    <p className="font-medium">{a.servico}</p>
+                <div key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <div className="min-w-0">
+                    <p className="truncate">{a.servico}</p>
                     <p className="text-xs text-muted-foreground">
                       {formatDateBR(a.data)} · {hhmm(a.hora_inicio)}
                     </p>
