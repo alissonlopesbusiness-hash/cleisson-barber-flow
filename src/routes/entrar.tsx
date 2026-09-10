@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Logo, Screen } from "@/components/app/shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/entrar")({
   head: () => ({
@@ -77,14 +78,32 @@ function AuthPage() {
   }
 
   return (
-    <Screen className="pb-10">
-      <div className="flex flex-col items-center pt-4 text-center">
-        <Logo className="w-40" />
-        <h1 className="mt-6 text-3xl font-semibold">{mode === "login" ? "Entrar" : "Criar conta"}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Acompanhe seus horários e sua assinatura.</p>
+    <Screen className="pb-14">
+      <div className="flex flex-col items-center text-center">
+        <Logo className="h-24 w-24" />
+        <h1 className="mt-5 text-[2.2rem] leading-none">
+          {mode === "login" ? "Bem-vindo" : "Criar conta"}
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">Acompanhe seus horários e sua assinatura.</p>
       </div>
 
-      <form onSubmit={submit} className="panel mt-8 space-y-4 p-5">
+      <div className="mt-7 grid grid-cols-2 gap-1 rounded-full border border-border p-1">
+        {(["login", "signup"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={cn(
+              "focus-ring h-10 rounded-full text-xs font-semibold uppercase tracking-[0.14em] transition-colors",
+              mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+            )}
+          >
+            {m === "login" ? "Entrar" : "Cadastrar"}
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={submit} className="panel mt-5 space-y-4 p-5">
         {mode === "signup" ? (
           <>
             <div className="space-y-2">
@@ -127,22 +146,12 @@ function AuthPage() {
             required
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex h-14 w-full items-center justify-center rounded-full bg-primary text-sm font-bold tracking-widest text-primary-foreground disabled:opacity-60"
-        >
-          {loading ? "AGUARDE..." : mode === "login" ? "ENTRAR" : "CRIAR CONTA"}
+        <button type="submit" disabled={loading} className="action-primary focus-ring w-full">
+          {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta"}
         </button>
       </form>
 
-      <button
-        onClick={() => setMode(mode === "login" ? "signup" : "login")}
-        className="mt-5 w-full text-center text-sm text-gold"
-      >
-        {mode === "login" ? "Ainda não tenho conta" : "Já tenho conta"}
-      </button>
-      <Link to="/" className="mt-4 block text-center text-sm text-muted-foreground">
+      <Link to="/" className="focus-ring mt-6 block text-center text-sm text-muted-foreground">
         Voltar ao início
       </Link>
     </Screen>

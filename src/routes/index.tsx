@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Clock, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo, Screen } from "@/components/app/shell";
+import { Logo, Screen, SectionHeading } from "@/components/app/shell";
 import { brl } from "@/lib/date";
 
 export const Route = createFileRoute("/")({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/")({
         content: "Cabelo, barba e assinaturas na Cleisson Barber Club. Escolha serviço, data e horário pelo celular.",
       },
       { property: "og:title", content: "Cleisson Barber Club — Agende seu horário" },
-      { property: "og:description", content: "Escolha seu serviço, data e horário." },
+      { property: "og:description", content: "Escolha seu serviço, data e horário em poucos toques." },
     ],
   }),
   component: Index,
@@ -30,41 +31,57 @@ function Index() {
   });
 
   return (
-    <Screen className="pb-10">
-      <div className="flex flex-col items-center pt-6 text-center">
-        <Logo className="w-56" />
-        <p className="eyebrow mt-6">Cleisson Barber Club</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-wide">AGENDE SEU HORÁRIO</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Escolha seu serviço, data e horário.</p>
+    <Screen className="pb-16">
+      <div className="flex flex-col items-center text-center">
+        <Logo className="h-40 w-40" />
+        <p className="eyebrow mt-5">Barbearia & clube</p>
+        <h1 className="mt-3 text-[2.6rem] leading-[0.95]">
+          Agende seu
+          <br />
+          <span className="italic text-gold">horário</span>
+        </h1>
+        <p className="mt-4 max-w-[17rem] text-sm text-muted-foreground">
+          Serviço, data e horário em poucos toques. Sem fila, sem espera.
+        </p>
 
-        <Link
-          to="/agendar"
-          className="mt-8 flex h-14 w-full items-center justify-center rounded-full bg-primary text-sm font-bold tracking-widest text-primary-foreground"
-        >
-          AGENDAR HORÁRIO
+        <Link to="/agendar" className="action-primary focus-ring mt-7 w-full">
+          Agendar horário
+          <ArrowRight className="h-4 w-4" />
         </Link>
-        <Link to="/entrar" className="mt-4 text-sm font-medium text-gold underline-offset-4">
+        <Link
+          to="/entrar"
+          className="focus-ring mt-4 inline-flex h-11 items-center justify-center text-sm font-medium text-gold"
+        >
           Área do cliente
         </Link>
       </div>
 
-      <section className="mt-10">
-        <p className="eyebrow">Serviços</p>
-        <div className="mt-3 panel divide-y divide-border">
+      <section className="mt-12">
+        <SectionHeading label="Serviços" />
+        <div className="panel divide-y divide-border/70">
           {(services ?? []).map((s) => (
-            <div key={s.id} className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm font-medium">{s.nome}</span>
-              <span className="font-display text-lg text-gold">{brl(s.preco)}</span>
+            <div key={s.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+              <span className="min-w-0 truncate text-sm">{s.nome}</span>
+              <span className="font-display text-xl text-gold">{brl(s.preco)}</span>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mt-8">
-        <p className="eyebrow">Horário de funcionamento</p>
-        <div className="panel mt-3 px-4 py-3 text-sm text-muted-foreground">
-          <p>Segunda a sexta — 09:00 às 19:00</p>
-          <p className="mt-1">Sábado e domingo — 09:00 às 19:30</p>
+      <section className="mt-10">
+        <SectionHeading label="Funcionamento" />
+        <div className="panel space-y-3 p-4 text-sm">
+          <div className="flex items-start gap-3">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+            <div className="min-w-0">
+              <p>Segunda a sexta — 09:00 às 19:00</p>
+              <p className="mt-1 text-muted-foreground">Sábado e domingo — 09:00 às 19:30</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-t border-border/70 pt-3">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+            <p className="min-w-0 text-muted-foreground">Atendimento com hora marcada.</p>
+          </div>
         </div>
       </section>
     </Screen>
