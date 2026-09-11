@@ -33,8 +33,8 @@
   --color-gold-deep: var(--gold-deep);
   --color-surface: var(--surface);
   --color-success: var(--success);
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-sans: "Work Sans", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 :root {
