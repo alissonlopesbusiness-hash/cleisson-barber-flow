@@ -91,7 +91,8 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
