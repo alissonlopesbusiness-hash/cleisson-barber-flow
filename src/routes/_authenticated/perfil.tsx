@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAccount, updateMyProfile, claimBarberRole } from "@/lib/account.functions";
-import { Screen, PageTitle, BottomNav, Panel } from "@/components/app/shell";
+import { Screen, PageTitle, BottomNav, SectionHeading } from "@/components/app/shell";
 import { clientNav } from "./conta";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,35 +72,42 @@ function PerfilPage() {
     <>
       <Screen>
         <PageTitle eyebrow="Sua conta" title="Perfil" />
-        <Panel className="space-y-4">
+
+        <SectionHeading label="Dados pessoais" />
+        <div className="panel space-y-5 p-5">
           <div className="space-y-2">
-            <Label htmlFor="n">Nome completo</Label>
+            <Label htmlFor="n" className="eyebrow">Nome completo</Label>
             <Input id="n" value={nome} onChange={(e) => setNome(e.target.value)} className="h-12" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="t">WhatsApp</Label>
+            <Label htmlFor="t" className="eyebrow">WhatsApp</Label>
             <Input id="t" inputMode="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} className="h-12" />
           </div>
-          <p className="text-xs text-muted-foreground">{data?.email}</p>
+          {data?.email ? (
+            <p className="text-xs text-muted-foreground">Acesso: {data.email}</p>
+          ) : null}
           <button
             onClick={() => save.mutate()}
             disabled={save.isPending}
-            className="flex h-13 w-full items-center justify-center rounded-full bg-primary py-4 text-sm font-bold tracking-widest text-primary-foreground disabled:opacity-60"
+            className="action-primary focus-ring w-full disabled:opacity-60"
           >
-            SALVAR
+            Salvar alterações
           </button>
-        </Panel>
+        </div>
 
         {data && !data.isAdmin && !data.adminExists ? (
           <button
             onClick={() => claim.mutate()}
-            className="panel mt-5 w-full p-4 text-sm font-semibold text-gold"
+            className="panel focus-ring mt-6 w-full p-4 text-left text-sm font-semibold text-gold"
           >
             Sou o barbeiro — ativar painel administrativo
           </button>
         ) : null}
 
-        <button onClick={signOut} className="mt-6 w-full text-center text-sm text-destructive">
+        <button
+          onClick={signOut}
+          className="focus-ring mt-8 w-full rounded-full border border-destructive/35 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-destructive"
+        >
           Sair da conta
         </button>
       </Screen>

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyAccount } from "@/lib/account.functions";
-import { Screen, PageTitle, Loading, BottomNav, Panel } from "@/components/app/shell";
+import { Screen, PageTitle, Loading, BottomNav, EmptyState, SectionHeading } from "@/components/app/shell";
 import { clientNav } from "./conta";
 import { brl, formatDateBR } from "@/lib/date";
 
@@ -44,77 +44,93 @@ function AssinaturaPage() {
   return (
     <>
       <Screen>
-        <PageTitle eyebrow="Cleisson Barber Club" title="Minha assinatura" />
+        <PageTitle eyebrow="Clube" title="Minha assinatura" />
+
         {isLoading ? (
           <Loading rows={2} />
         ) : sub ? (
-          <Panel>
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl text-gold">{sub.plano.toUpperCase()}</h2>
-              <span
-                className={`rounded-full border px-3 py-1 text-[0.62rem] font-semibold tracking-widest ${
-                  sub.ativa ? "border-success/40 text-success" : "border-destructive/40 text-destructive"
-                }`}
-              >
-                {sub.ativa ? "ATIVA" : "EXPIRADA"}
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Início em {formatDateBR(sub.data_inicio)} · Válido até {formatDateBR(sub.data_fim)}
-            </p>
-            <div className="mt-5 space-y-4">
-              {sub.beneficios.map((b) => (
-                <div key={b.tipo}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="capitalize">{b.tipo === "corte" ? "Cortes" : "Barbas"}</span>
-                    <span className="text-gold">
-                      {b.limite === null ? "Ilimitado" : `${b.usados} / ${b.limite} utilizados`}
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{ width: b.limite === null ? "100%" : `${Math.min(100, (b.usados / b.limite) * 100)}%` }}
-                    />
-                  </div>
+          <>
+            <SectionHeading label="Plano atual" />
+            <div className="panel p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display text-3xl leading-none text-gold">{sub.plano}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {formatDateBR(sub.data_inicio)} — {formatDateBR(sub.data_fim)}
+                  </p>
                 </div>
-              ))}
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.58rem] font-semibold tracking-[0.12em] ${
+                    sub.ativa ? "border-success/40 text-success" : "border-destructive/40 text-destructive"
+                  }`}
+                >
+                  {sub.ativa ? "ATIVA" : "EXPIRADA"}
+                </span>
+              </div>
+
+              <div className="mt-6 space-y-5 border-t border-border/70 pt-5">
+                {sub.beneficios.map((b) => (
+                  <div key={b.tipo}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{b.tipo === "corte" ? "Cortes" : "Barbas"}</span>
+                      <span className="text-gold">
+                        {b.limite === null ? "Ilimitado" : `${b.usados} / ${b.limite}`}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full bg-gold"
+                        style={{
+                          width: b.limite === null ? "100%" : `${Math.min(100, (b.usados / b.limite) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </Panel>
+          </>
         ) : (
-          <Panel>
-            <p className="text-sm text-muted-foreground">
-              Você ainda não possui uma assinatura. Fale com o barbeiro para ativar um plano.
-            </p>
-          </Panel>
+          <EmptyState
+            title="Sem assinatura ativa"
+            description="Fale com o barbeiro para ativar um dos planos do clube."
+          />
         )}
 
-        <section className="mt-8">
-          <p className="eyebrow">Planos disponíveis</p>
-          <div className="mt-3 space-y-3">
-            {(plans ?? []).map((p) => (
-              <div key={p.id} className="panel p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-display text-xl">{p.nome}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {p.ilimitado
-                        ? `Ilimitado · ${p.duracao_dias} dias`
-                        : [
-                            p.cortes_limite ? `${p.cortes_limite} cortes` : null,
-                            p.barbas_limite ? `${p.barbas_limite} barbas` : null,
-                          ]
-                            .filter(Boolean)
-                            .join(" + ")}
+        <section className="mt-9">
+          <SectionHeading label="Planos do clube" />
+          <div className="space-y-3">
+            {(plans ?? []).map((p) => {
+              const premium = p.tipo === "premium";
+              return (
+                <div
+                  key={p.id}
+                  className={`panel p-5 ${premium ? "border-gold/45" : ""}`}
+                >
+                  {premium ? (
+                    <p className="mb-3 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-gold">
+                      Mais vantajoso ★★★
                     </p>
-                    {p.tipo === "premium" ? (
-                      <p className="mt-1 text-[0.65rem] font-semibold tracking-widest text-gold">MAIS VANTAJOSO ★★★</p>
-                    ) : null}
+                  ) : null}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-display text-2xl leading-tight">{p.nome}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {p.ilimitado
+                          ? `Ilimitado · ${p.duracao_dias} dias`
+                          : [
+                              p.cortes_limite ? `${p.cortes_limite} cortes` : null,
+                              p.barbas_limite ? `${p.barbas_limite} barbas` : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" + ")}
+                      </p>
+                    </div>
+                    <p className="shrink-0 font-display text-2xl text-gold">{brl(p.preco)}</p>
                   </div>
-                  <p className="font-display text-2xl text-gold">{brl(p.preco)}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </Screen>

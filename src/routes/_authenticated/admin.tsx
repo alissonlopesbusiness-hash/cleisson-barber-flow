@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { getAgendaDay, completeAppointment, adminCancelAppointment, listClients, blockSlot } from "@/lib/admin.functions";
-import { Screen, PageTitle, Loading, EmptyState, StatusBadge, Panel } from "@/components/app/shell";
+import { Screen, PageTitle, Loading, EmptyState, StatusBadge, SectionHeading } from "@/components/app/shell";
 import { brl, formatDateBR, hhmm, todayISO, weekdayName } from "@/lib/date";
 import { bookingMessage } from "@/lib/messages";
 
@@ -72,7 +72,7 @@ function AdminPage() {
     return (
       <Screen>
         <EmptyState title="Acesso restrito" description="Esta área é exclusiva do barbeiro." />
-        <Link to="/conta" className="mt-6 block text-center text-sm text-gold">
+        <Link to="/conta" className="focus-ring mt-6 block text-center text-sm text-gold">
           Voltar
         </Link>
       </Screen>
@@ -83,126 +83,146 @@ function AdminPage() {
     <Screen>
       <PageTitle eyebrow="Painel do barbeiro" title={date === todayISO() ? "Hoje" : formatDateBR(date)} />
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-7 grid grid-cols-2 gap-2">
         {(["agenda", "clientes"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 rounded-full border py-2.5 text-xs font-semibold tracking-widest ${
-              tab === t ? "border-gold bg-primary text-primary-foreground" : "border-border text-muted-foreground"
+            className={`focus-ring rounded-full border py-3 text-[0.68rem] font-semibold uppercase tracking-[0.16em] transition-colors ${
+              tab === t ? "border-gold text-gold" : "border-border text-muted-foreground"
             }`}
           >
-            {t.toUpperCase()}
+            {t}
           </button>
         ))}
       </div>
 
       {tab === "agenda" ? (
         <>
-          <div className="mb-4 grid grid-cols-3 gap-2 text-center">
-            <Stat label="Agendamentos" value={data?.stats.total ?? 0} />
+          <div className="mb-7 grid grid-cols-3 gap-2">
+            <Stat label="Agenda" value={data?.stats.total ?? 0} />
             <Stat label="Assinantes" value={data?.stats.assinantes ?? 0} />
             <Stat label="Concluídos" value={data?.stats.concluidos ?? 0} />
           </div>
 
-          <Panel className="mb-4">
-            <label className="eyebrow" htmlFor="d">
-              Data
-            </label>
+          <SectionHeading label="Data e bloqueios" />
+          <div className="panel p-5">
+            <label className="eyebrow" htmlFor="d">Dia</label>
             <input
               id="d"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value || todayISO())}
-              className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-3 text-sm"
+              className="focus-ring mt-2 h-12 w-full rounded-[var(--radius)] border border-border bg-background px-3 text-sm"
             />
-            <p className="mt-2 text-xs text-muted-foreground">{weekdayName(date)}</p>
-            <div className="mt-4 flex gap-2">
+            <p className="mt-2 text-xs capitalize text-muted-foreground">{weekdayName(date)}</p>
+            <div className="mt-5 flex gap-2 border-t border-border/70 pt-5">
               <input
                 type="time"
                 step={1800}
                 value={blockTime}
                 onChange={(e) => setBlockTime(e.target.value)}
-                className="h-12 flex-1 rounded-xl border border-input bg-background px-3 text-sm"
+                className="focus-ring h-12 min-w-0 flex-1 rounded-[var(--radius)] border border-border bg-background px-3 text-sm"
               />
               <button
                 disabled={!blockTime || block.isPending}
                 onClick={() => block.mutate()}
-                className="rounded-xl border border-gold/40 px-4 text-xs font-semibold tracking-widest text-gold disabled:opacity-50"
+                className="focus-ring shrink-0 rounded-full border border-gold/40 px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-gold disabled:opacity-50"
               >
-                BLOQUEAR
+                Bloquear
               </button>
             </div>
-          </Panel>
+          </div>
 
-          {isLoading ? (
-            <Loading />
-          ) : (data?.items.length ?? 0) === 0 && (data?.blocks.length ?? 0) === 0 ? (
-            <EmptyState title="Nenhum atendimento" description="Não há agendamentos nesta data." />
-          ) : (
-            <div className="space-y-3">
-              {(data?.blocks ?? []).map((b) => (
-                <div key={b.id} className="panel border-dashed p-4 text-sm text-muted-foreground">
-                  <span className="font-display text-xl text-gold">{hhmm(b.hora_inicio)}</span> — BLOQUEADO
-                  {b.motivo ? <p className="text-xs">{b.motivo}</p> : null}
-                </div>
-              ))}
-              {(data?.items ?? []).map((a) => (
-                <div key={a.id} className="panel p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-display text-2xl text-gold">{hhmm(a.hora_inicio)}</p>
-                      <p className="text-sm font-semibold">{a.cliente}</p>
-                      <p className="text-sm text-muted-foreground">✂️ {a.servico}</p>
-                      {a.plano ? <p className="text-xs text-gold">⭐ Assinante · {a.plano}</p> : null}
-                      <p className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-9">
+            <SectionHeading label="Atendimentos" />
+            {isLoading ? (
+              <Loading />
+            ) : (data?.items.length ?? 0) === 0 && (data?.blocks.length ?? 0) === 0 ? (
+              <EmptyState title="Nenhum atendimento" description="Não há agendamentos nesta data." />
+            ) : (
+              <div className="space-y-3">
+                {(data?.blocks ?? []).map((b) => (
+                  <div key={b.id} className="panel border-dashed p-4">
+                    <div className="flex items-baseline gap-3">
+                      <span className="font-display text-2xl text-gold">{hhmm(b.hora_inicio)}</span>
+                      <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Bloqueado
+                      </span>
+                    </div>
+                    {b.motivo ? <p className="mt-1 text-xs text-muted-foreground">{b.motivo}</p> : null}
+                  </div>
+                ))}
+                {(data?.items ?? []).map((a) => (
+                  <div key={a.id} className="panel p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-display text-3xl leading-none text-gold">{hhmm(a.hora_inicio)}</p>
+                        <p className="mt-3 truncate text-sm font-semibold">{a.cliente}</p>
+                        <p className="truncate text-sm text-muted-foreground">{a.servico}</p>
+                        {a.plano ? (
+                          <p className="mt-1 text-[0.62rem] uppercase tracking-[0.14em] text-gold">
+                            Assinante · {a.plano}
+                          </p>
+                        ) : null}
+                      </div>
+                      <StatusBadge status={a.status} />
+                    </div>
+                    <div className="mt-4 border-t border-border/70 pt-4">
+                      <p className="text-sm text-muted-foreground">
                         {a.tipo_atendimento === "assinatura" ? "Assinatura" : brl(Number(a.preco))}
                       </p>
+                      {a.status === "agendado" || a.status === "confirmado" ? (
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => {
+                              if (confirm(`Concluir atendimento de ${a.cliente} (${a.servico})?`))
+                                act.mutate({ id: a.id, kind: "concluir" });
+                            }}
+                            className="action-primary focus-ring flex-1"
+                          >
+                            Concluir
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm("Cancelar este atendimento?")) act.mutate({ id: a.id, kind: "cancelar" });
+                            }}
+                            className="focus-ring flex-1 rounded-full border border-destructive/40 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-destructive"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
-                    <StatusBadge status={a.status} />
                   </div>
-                  {a.status === "agendado" || a.status === "confirmado" ? (
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (confirm(`Concluir atendimento de ${a.cliente} (${a.servico})?`))
-                            act.mutate({ id: a.id, kind: "concluir" });
-                        }}
-                        className="flex-1 rounded-full bg-primary py-3 text-xs font-bold tracking-widest text-primary-foreground"
-                      >
-                        CONCLUIR
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm("Cancelar este atendimento?")) act.mutate({ id: a.id, kind: "cancelar" });
-                        }}
-                        className="flex-1 rounded-full border border-destructive/40 py-3 text-xs font-bold tracking-widest text-destructive"
-                      >
-                        CANCELAR
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </>
       ) : (
-        <div className="space-y-3">
-          {(clients ?? []).map((c) => (
-            <div key={c.id} className="panel flex items-center justify-between p-4">
-              <div>
-                <p className="text-sm font-semibold">{c.nome}</p>
-                <p className="text-xs text-muted-foreground">{c.telefone ?? "sem WhatsApp"}</p>
+        <>
+          <SectionHeading label="Clientes" />
+          <div className="space-y-3">
+            {(clients ?? []).map((c) => (
+              <div key={c.id} className="panel flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{c.nome}</p>
+                  <p className="truncate text-xs text-muted-foreground">{c.telefone ?? "sem WhatsApp"}</p>
+                </div>
+                {c.assinaturaAtiva ? (
+                  <span className="shrink-0 rounded-full border border-gold/40 px-2.5 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-gold">
+                    {c.plano}
+                  </span>
+                ) : null}
               </div>
-              {c.assinaturaAtiva ? <span className="text-xs text-gold">⭐ {c.plano}</span> : null}
-            </div>
-          ))}
-          {(clients ?? []).length === 0 ? <EmptyState title="Nenhum cliente cadastrado" /> : null}
-        </div>
+            ))}
+            {(clients ?? []).length === 0 ? <EmptyState title="Nenhum cliente cadastrado" /> : null}
+          </div>
+        </>
       )}
 
-      <Link to="/conta" className="mt-8 block text-center text-sm text-muted-foreground">
+      <Link to="/conta" className="focus-ring mt-9 block text-center text-sm text-muted-foreground">
         Voltar para minha conta
       </Link>
     </Screen>
@@ -211,9 +231,9 @@ function AdminPage() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="panel px-2 py-3">
-      <p className="font-display text-2xl text-gold">{value}</p>
-      <p className="text-[0.62rem] uppercase tracking-widest text-muted-foreground">{label}</p>
+    <div className="panel px-2 py-4 text-center">
+      <p className="font-display text-3xl leading-none text-gold">{value}</p>
+      <p className="mt-2 text-[0.55rem] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
     </div>
   );
 }
