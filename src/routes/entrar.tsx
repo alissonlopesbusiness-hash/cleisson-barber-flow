@@ -67,10 +67,15 @@ function AuthPage() {
         navigate({ to: "/conta" });
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
       toast.error(
-        err instanceof Error && err.message.includes("Invalid login")
+        msg.includes("Invalid login")
           ? "E-mail ou senha incorretos."
-          : "Não foi possível continuar. Tente novamente.",
+          : msg.includes("already registered") || msg.includes("already been registered")
+            ? "Este e-mail já tem conta. Faça login."
+            : msg.toLowerCase().includes("weak") || msg.includes("pwned")
+              ? "Escolha uma senha mais forte."
+              : "Não foi possível continuar. Tente novamente.",
       );
     } finally {
       setLoading(false);
