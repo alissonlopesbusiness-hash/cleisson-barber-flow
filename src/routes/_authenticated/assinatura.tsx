@@ -41,6 +41,11 @@ function AssinaturaPage() {
 
   const sub = data?.subscription;
 
+  // Apenas um plano recebe o selo "Mais vantajoso": o ilimitado mais completo.
+  const destaqueId = (plans ?? [])
+    .filter((p) => p.ilimitado && p.permite_corte && p.permite_barba)
+    .sort((a, b) => Number(b.preco) - Number(a.preco))[0]?.id;
+
   return (
     <>
       <Screen>
