@@ -57,6 +57,7 @@ function AdminPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["agenda", date],
     queryFn: () => agendaFn({ data: { date } }),
+    retry: false,
   });
 
   const act = useMutation({
