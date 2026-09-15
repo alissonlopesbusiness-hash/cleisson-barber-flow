@@ -57,6 +57,7 @@ function AdminPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["agenda", date],
     queryFn: () => agendaFn({ data: { date } }),
+    retry: false,
   });
 
   const act = useMutation({
@@ -92,6 +93,15 @@ function AdminPage() {
       qc.invalidateQueries({ queryKey: ["agenda"] });
     },
   });
+
+  if (isLoading && !data) {
+    return (
+      <Screen>
+        <PageTitle eyebrow="Painel do barbeiro" title="Carregando" />
+        <Loading rows={3} />
+      </Screen>
+    );
+  }
 
   if (error) {
     return (
