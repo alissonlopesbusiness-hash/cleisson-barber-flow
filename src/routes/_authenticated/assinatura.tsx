@@ -101,7 +101,7 @@ function AssinaturaPage() {
           <SectionHeading label="Planos do clube" />
           <div className="space-y-3">
             {(plans ?? []).map((p) => {
-              const premium = p.tipo === "premium";
+              const premium = p.id === destaqueId;
               return (
                 <div
                   key={p.id}
