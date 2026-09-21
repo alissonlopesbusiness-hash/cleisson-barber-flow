@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarDays, Home, Scissors, Star, User } from "lucide-react";
+import { CalendarDays, Home, Scissors, User } from "lucide-react";
 import { getMyAccount, cancelMyAppointment } from "@/lib/account.functions";
 import {
   Screen,
@@ -32,7 +32,6 @@ export const clientNav = [
   { to: "/", label: "Início", icon: <Home className="h-5 w-5" /> },
   { to: "/agendar", label: "Agendar", icon: <Scissors className="h-5 w-5" /> },
   { to: "/conta", label: "Horários", icon: <CalendarDays className="h-5 w-5" /> },
-  { to: "/assinatura", label: "Assinatura", icon: <Star className="h-5 w-5" /> },
   { to: "/perfil", label: "Perfil", icon: <User className="h-5 w-5" /> },
 ];
 
@@ -97,7 +96,7 @@ function ContaPage() {
               </p>
               <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/70 pt-4">
                 <span className="text-sm text-muted-foreground">
-                  {next.tipo_atendimento === "assinatura" ? "Assinatura" : brl(Number(next.preco))}
+                  {brl(Number(next.preco))}
                 </span>
                 <button
                   onClick={() => cancel.mutate(next.id)}

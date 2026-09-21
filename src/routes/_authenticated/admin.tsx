@@ -14,9 +14,6 @@ import {
   getClientDetail,
   createClientProfile,
   adminCreateBooking,
-  listSubscriptions,
-  assignSubscription,
-  cancelSubscription,
 } from "@/lib/admin.functions";
 import { getAvailability } from "@/lib/booking.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Painel do barbeiro — Cleisson Barber Club" },
-      { name: "description", content: "Agenda do dia, atendimentos, clientes e assinaturas da barbearia." },
+      { name: "description", content: "Agenda do dia, atendimentos e clientes da barbearia." },
       { property: "og:title", content: "Painel do barbeiro — Cleisson Barber Club" },
       { property: "og:description", content: "Gestão da agenda da Cleisson Barber Club." },
     ],
@@ -47,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "agenda" | "clientes" | "assinaturas";
+type Tab = "agenda" | "clientes";
 
 function AdminPage() {
   const qc = useQueryClient();
@@ -147,8 +144,8 @@ function AdminPage() {
         </button>
       </div>
 
-      <div className="mb-7 grid grid-cols-3 gap-2">
-        {(["agenda", "clientes", "assinaturas"] as const).map((t) => (
+      <div className="mb-7 grid grid-cols-2 gap-2">
+        {(["agenda", "clientes"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -165,7 +162,7 @@ function AdminPage() {
         <>
           <div className="mb-7 grid grid-cols-3 gap-2">
             <Stat label="Agenda" value={data?.stats.total ?? 0} />
-            <Stat label="Assinantes" value={data?.stats.assinantes ?? 0} />
+            <Stat label="Confirmados" value={data?.stats.confirmados ?? 0} />
             <Stat label="Concluídos" value={data?.stats.concluidos ?? 0} />
           </div>
 
@@ -266,18 +263,11 @@ function AdminPage() {
                           {a.cliente}
                         </button>
                         <p className="truncate text-sm text-muted-foreground">{a.servico}</p>
-                        {a.plano ? (
-                          <p className="mt-1 text-[0.62rem] uppercase tracking-[0.14em] text-gold">
-                            Assinante · {a.plano}
-                          </p>
-                        ) : null}
                       </div>
                       <StatusBadge status={a.status} />
                     </div>
                     <div className="mt-4 border-t border-border/70 pt-4">
-                      <p className="text-sm text-muted-foreground">
-                        {a.tipo_atendimento === "assinatura" ? "Assinatura" : brl(Number(a.preco))}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{brl(Number(a.preco))}</p>
                       {a.status === "agendado" || a.status === "confirmado" ? (
                         <div className="mt-4 flex gap-2">
                           <button
@@ -306,10 +296,8 @@ function AdminPage() {
             )}
           </div>
         </>
-      ) : tab === "clientes" ? (
-        <ClientsTab onOpen={setClientId} />
       ) : (
-        <SubscriptionsTab onOpen={setClientId} />
+        <ClientsTab onOpen={setClientId} />
       )}
 
       <Link to="/conta" className="focus-ring mt-9 block text-center text-sm text-muted-foreground">
@@ -339,17 +327,6 @@ function useServices() {
   });
 }
 
-function usePlans() {
-  return useQuery({
-    queryKey: ["plans"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("subscription_plans").select("*").eq("ativo", true).order("ordem");
-      if (error) throw error;
-      return data;
-    },
-  });
-}
-
 const fieldClass =
   "focus-ring h-12 w-full rounded-[var(--radius)] border border-border bg-background px-3 text-sm";
 
@@ -368,10 +345,9 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
   const [clienteId, setClienteId] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [time, setTime] = useState("");
-  const [usarAssinatura, setUsarAssinatura] = useState(false);
 
   const create = useMutation({
-    mutationFn: () => bookFn({ data: { clienteId, serviceId, date, time, usarAssinatura } }),
+    mutationFn: () => bookFn({ data: { clienteId, serviceId, date, time } }),
     onSuccess: (res) => {
       if (res?.ok) {
         toast.success("Agendamento criado.");
@@ -393,7 +369,6 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
           {(clients ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.nome}
-              {c.assinaturaAtiva ? ` · ${c.plano}` : ""}
             </option>
           ))}
         </select>
@@ -421,15 +396,6 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
         </select>
         {availability?.closed ? <p className="text-xs text-muted-foreground">Barbearia fechada nesta data.</p> : null}
       </div>
-      <label className="flex items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={usarAssinatura}
-          onChange={(e) => setUsarAssinatura(e.target.checked)}
-          className="h-4 w-4 accent-[var(--gold,#D6A83F)]"
-        />
-        Usar benefício da assinatura
-      </label>
       <button
         disabled={!clienteId || !serviceId || !time || create.isPending}
         onClick={() => create.mutate()}
@@ -524,11 +490,6 @@ function ClientsTab({ onOpen }: { onOpen: (id: string) => void }) {
                 <p className="truncate text-sm font-semibold">{c.nome}</p>
                 <p className="truncate text-xs text-muted-foreground">{c.telefone ?? "sem WhatsApp"}</p>
               </div>
-              {c.assinaturaAtiva ? (
-                <span className="shrink-0 rounded-full border border-gold/40 px-2.5 py-1 text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-gold">
-                  {c.plano}
-                </span>
-              ) : null}
             </button>
           ))
         )}
@@ -537,98 +498,12 @@ function ClientsTab({ onOpen }: { onOpen: (id: string) => void }) {
   );
 }
 
-function SubscriptionsTab({ onOpen }: { onOpen: (id: string) => void }) {
-  const qc = useQueryClient();
-  const listFn = useServerFn(listSubscriptions);
-  const cancelFn = useServerFn(cancelSubscription);
-
-  const { data: subs, isLoading } = useQuery({
-    queryKey: ["subscriptions"],
-    queryFn: () => listFn({ data: undefined as never }),
-  });
-
-  const cancel = useMutation({
-    mutationFn: (id: string) => cancelFn({ data: { id } }),
-    onSuccess: () => {
-      toast.success("Assinatura cancelada.");
-      qc.invalidateQueries({ queryKey: ["subscriptions"] });
-      qc.invalidateQueries({ queryKey: ["clients"] });
-    },
-  });
-
-  return (
-    <>
-      <SectionHeading label="Assinaturas" />
-      {isLoading ? (
-        <Loading />
-      ) : (subs ?? []).length === 0 ? (
-        <EmptyState title="Nenhuma assinatura" description="Ative um plano na ficha do cliente." />
-      ) : (
-        <div className="space-y-3">
-          {(subs ?? []).map((s) => (
-            <div key={s.id} className="panel p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <button
-                    onClick={() => onOpen(s.clienteId)}
-                    className="focus-ring block max-w-full truncate text-left text-sm font-semibold underline-offset-4 hover:underline"
-                  >
-                    {s.cliente}
-                  </button>
-                  <p className="truncate text-xs text-gold">{s.plano}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatDateBR(s.data_inicio)} — {formatDateBR(s.data_fim)}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.58rem] font-semibold tracking-[0.12em] ${
-                    s.ativa ? "border-success/40 text-success" : "border-destructive/40 text-destructive"
-                  }`}
-                >
-                  {s.ativa ? "ATIVA" : "INATIVA"}
-                </span>
-              </div>
-              {s.ativa ? (
-                <button
-                  onClick={() => {
-                    if (confirm(`Cancelar a assinatura de ${s.cliente}?`)) cancel.mutate(s.id);
-                  }}
-                  className="focus-ring mt-4 w-full rounded-full border border-destructive/40 py-3 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-destructive"
-                >
-                  Cancelar assinatura
-                </button>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
 function ClientDetail({ id, onBack }: { id: string; onBack: () => void }) {
-  const qc = useQueryClient();
   const detailFn = useServerFn(getClientDetail);
-  const assignFn = useServerFn(assignSubscription);
-  const { data: plans } = usePlans();
-  const [planoId, setPlanoId] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["client-detail", id],
     queryFn: () => detailFn({ data: { id } }),
-  });
-
-  const assign = useMutation({
-    mutationFn: () => assignFn({ data: { clienteId: id, planoId } }),
-    onSuccess: (res) => {
-      if (res?.ok) {
-        toast.success("Plano ativado para o cliente.");
-        setPlanoId("");
-        qc.invalidateQueries({ queryKey: ["client-detail", id] });
-        qc.invalidateQueries({ queryKey: ["subscriptions"] });
-        qc.invalidateQueries({ queryKey: ["clients"] });
-      } else toast.error("Não foi possível ativar o plano.");
-    },
   });
 
   return (
@@ -663,47 +538,6 @@ function ClientDetail({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
 
           <div className="mt-9">
-            <SectionHeading label="Assinatura" />
-            {data.assinatura ? (
-              <div className="panel p-5">
-                <p className="font-display text-2xl text-gold">{data.assinatura.plano}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {formatDateBR(data.assinatura.data_inicio)} — {formatDateBR(data.assinatura.data_fim)}
-                </p>
-                <div className="mt-4 space-y-2 border-t border-border/70 pt-4 text-sm">
-                  {data.assinatura.beneficios.map((b) => (
-                    <div key={b.tipo} className="flex items-center justify-between">
-                      <span>{b.tipo === "corte" ? "Cortes" : "Barbas"}</span>
-                      <span className="text-gold">
-                        {b.limite === null ? "Ilimitado" : `${b.usados} / ${b.limite}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="panel space-y-4 p-5">
-                <p className="text-sm text-muted-foreground">Este cliente não possui plano ativo.</p>
-                <select value={planoId} onChange={(e) => setPlanoId(e.target.value)} className={fieldClass}>
-                  <option value="">Escolher plano</option>
-                  {(plans ?? []).map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nome} — {brl(Number(p.preco))}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  disabled={!planoId || assign.isPending}
-                  onClick={() => assign.mutate()}
-                  className="action-primary focus-ring w-full disabled:opacity-50"
-                >
-                  Ativar plano
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-9">
             <SectionHeading label="Histórico" />
             {data.historico.length === 0 ? (
               <EmptyState title="Sem atendimentos" />
@@ -714,8 +548,7 @@ function ClientDetail({ id, onBack }: { id: string; onBack: () => void }) {
                     <div className="min-w-0">
                       <p className="truncate">{a.servico}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDateBR(a.data)} · {hhmm(a.hora_inicio)} ·{" "}
-                        {a.tipo_atendimento === "assinatura" ? "Assinatura" : brl(Number(a.preco))}
+                        {formatDateBR(a.data)} · {hhmm(a.hora_inicio)} · {brl(Number(a.preco))}
                       </p>
                     </div>
                     <StatusBadge status={a.status} />

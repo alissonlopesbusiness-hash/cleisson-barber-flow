@@ -37,7 +37,6 @@ function BookingPage() {
   const [time, setTime] = useState<string | null>(null);
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [usarAssinatura, setUsarAssinatura] = useState(false);
   const [done, setDone] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
@@ -76,15 +75,6 @@ function BookingPage() {
   });
 
   const service = (services ?? []).find((s) => s.id === serviceId);
-  const sub = account?.subscription;
-  const podeUsarAssinatura = Boolean(
-    sub?.ativa &&
-      service &&
-      ((service.consome_corte && sub.beneficios.some((b) => b.tipo === "corte" && (b.limite === null || b.usados < b.limite))) ||
-        (service.consome_barba && sub.beneficios.some((b) => b.tipo === "barba" && (b.limite === null || b.usados < b.limite)))) &&
-      (!service.consome_corte || sub.beneficios.some((b) => b.tipo === "corte" && (b.limite === null || b.usados < b.limite))) &&
-      (!service.consome_barba || sub.beneficios.some((b) => b.tipo === "barba" && (b.limite === null || b.usados < b.limite))),
-  );
 
   const guestFn = useServerFn(createGuestBooking);
   const myFn = useServerFn(createMyBooking);
@@ -95,7 +85,7 @@ function BookingPage() {
       if (!serviceId || !time) throw new Error("dados");
       if (signedIn) {
         return myFn({
-          data: { serviceId, date, time, usarAssinatura: podeUsarAssinatura && usarAssinatura, nome, telefone },
+          data: { serviceId, date, time, nome, telefone },
         });
       }
       return guestFn({ data: { serviceId, date, time, nome, telefone } });
@@ -258,29 +248,6 @@ function BookingPage() {
             </div>
           </div>
 
-          {podeUsarAssinatura ? (
-            <button
-              onClick={() => setUsarAssinatura(!usarAssinatura)}
-              className={cn(
-                "panel focus-ring mt-4 flex w-full items-center justify-between gap-3 p-4 text-left",
-                usarAssinatura && "border-gold",
-              )}
-            >
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-gold">Usar benefício da assinatura</span>
-                <span className="text-xs text-muted-foreground">{sub?.plano}</span>
-              </span>
-              <span
-                className={cn(
-                  "grid h-6 w-6 shrink-0 place-items-center rounded-full border",
-                  usarAssinatura ? "border-gold bg-primary text-primary-foreground" : "border-border",
-                )}
-              >
-                {usarAssinatura ? <Check className="h-3.5 w-3.5" /> : null}
-              </span>
-            </button>
-          ) : null}
-
           <button
             onClick={() => {
               if (nome.trim().length < 3) {
@@ -309,10 +276,7 @@ function BookingPage() {
             <Row label="Horário" value={`${time} — ${time ? addMinutes(time, 30) : ""}`} />
             <Row label="Cliente" value={nome} />
             <div className="border-t border-border/70 pt-3">
-              <Row
-                label="Valor"
-                value={usarAssinatura && podeUsarAssinatura ? "Assinatura" : brl(Number(service?.preco ?? 0))}
-              />
+              <Row label="Valor" value={brl(Number(service?.preco ?? 0))} />
             </div>
           </div>
           <button

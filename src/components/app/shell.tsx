@@ -52,7 +52,7 @@ export function BottomNav({ items }: { items: NavItem[] }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav aria-label="Navegação principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl">
-      <div className="mx-auto grid max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto grid max-w-md grid-cols-4 px-1 pb-[env(safe-area-inset-bottom)]">
         {items.map((item) => {
           const active = pathname === item.to || pathname.startsWith(item.to + "/");
           return (

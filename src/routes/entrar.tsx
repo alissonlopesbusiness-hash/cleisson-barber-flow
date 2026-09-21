@@ -11,7 +11,7 @@ export const Route = createFileRoute("/entrar")({
   head: () => ({
     meta: [
       { title: "Entrar — Cleisson Barber Club" },
-      { name: "description", content: "Acesse sua conta para ver agendamentos e assinatura." },
+      { name: "description", content: "Acesse sua conta para ver agendamentos." },
       { property: "og:title", content: "Entrar — Cleisson Barber Club" },
       { property: "og:description", content: "Área do cliente da Cleisson Barber Club." },
     ],
@@ -89,7 +89,7 @@ function AuthPage() {
         <h1 className="mt-5 text-[2.2rem] leading-none">
           {mode === "login" ? "Bem-vindo" : "Criar conta"}
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground">Acompanhe seus horários e sua assinatura.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Acompanhe seus horários.</p>
       </div>
 
       <div className="mt-7 grid grid-cols-2 gap-1 rounded-full border border-border p-1">

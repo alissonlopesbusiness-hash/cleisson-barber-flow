@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
       { title: "Cleisson Barber Club — Agende seu horário" },
       {
         name: "description",
-        content: "Cabelo, barba e assinaturas na Cleisson Barber Club. Escolha serviço, data e horário pelo celular.",
+        content: "Cabelo e barba na Cleisson Barber Club. Escolha serviço, data e horário pelo celular.",
       },
       { property: "og:title", content: "Cleisson Barber Club — Agende seu horário" },
       { property: "og:description", content: "Escolha seu serviço, data e horário em poucos toques." },

@@ -68,7 +68,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "Cleisson Barber Club" },
       { title: "Cleisson Barber Club" },
-      { name: "description", content: "Agende cabelo, barba e utilize sua assinatura na Cleisson Barber Club." },
+      { name: "description", content: "Agende cabelo e barba na Cleisson Barber Club." },
       { property: "og:title", content: "Cleisson Barber Club" },
       { property: "og:description", content: "Agende seu horário na Cleisson Barber Club." },
       { property: "og:type", content: "website" },

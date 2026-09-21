@@ -14,7 +14,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AgendarRouteImport } from './routes/agendar'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
 import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 
@@ -42,11 +41,6 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
-  id: '/assinatura',
-  path: '/assinatura',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedContaRoute = AuthenticatedContaRouteImport.update({
   id: '/conta',
   path: '/conta',
@@ -63,7 +57,6 @@ export interface FileRoutesByFullPath {
   '/agendar': typeof AgendarRoute
   '/entrar': typeof EntrarRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/assinatura': typeof AuthenticatedAssinaturaRoute
   '/conta': typeof AuthenticatedContaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
 }
@@ -72,7 +65,6 @@ export interface FileRoutesByTo {
   '/agendar': typeof AgendarRoute
   '/entrar': typeof EntrarRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/assinatura': typeof AuthenticatedAssinaturaRoute
   '/conta': typeof AuthenticatedContaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
 }
@@ -83,29 +75,14 @@ export interface FileRoutesById {
   '/agendar': typeof AgendarRoute
   '/entrar': typeof EntrarRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRoute
   '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/agendar'
-    | '/entrar'
-    | '/admin'
-    | '/assinatura'
-    | '/conta'
-    | '/perfil'
+  fullPaths: '/' | '/agendar' | '/entrar' | '/admin' | '/conta' | '/perfil'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/agendar'
-    | '/entrar'
-    | '/admin'
-    | '/assinatura'
-    | '/conta'
-    | '/perfil'
+  to: '/' | '/agendar' | '/entrar' | '/admin' | '/conta' | '/perfil'
   id:
     | '__root__'
     | '/'
@@ -113,7 +90,6 @@ export interface FileRouteTypes {
     | '/agendar'
     | '/entrar'
     | '/_authenticated/admin'
-    | '/_authenticated/assinatura'
     | '/_authenticated/conta'
     | '/_authenticated/perfil'
   fileRoutesById: FileRoutesById
@@ -162,13 +138,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/assinatura': {
-      id: '/_authenticated/assinatura'
-      path: '/assinatura'
-      fullPath: '/assinatura'
-      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/conta': {
       id: '/_authenticated/conta'
       path: '/conta'
@@ -188,14 +157,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute
   AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedAssinaturaRoute: AuthenticatedAssinaturaRoute,
   AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
 }
