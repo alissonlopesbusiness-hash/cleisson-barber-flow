@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -88,6 +88,7 @@ function BookingPage() {
 
   const guestFn = useServerFn(createGuestBooking);
   const myFn = useServerFn(createMyBooking);
+  const qc = useQueryClient();
 
   const confirm = useMutation({
     mutationFn: async () => {
@@ -101,6 +102,9 @@ function BookingPage() {
     },
     onSuccess: (res) => {
       if (res?.ok) {
+        qc.invalidateQueries({ queryKey: ["account"] });
+        qc.invalidateQueries({ queryKey: ["agenda"] });
+        qc.invalidateQueries({ queryKey: ["availability"] });
         setDone(true);
       } else {
         toast.error(bookingMessage(res?.code));

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import {
   getAgendaDay,
   completeAppointment,
@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Screen, PageTitle, Loading, EmptyState, StatusBadge, SectionHeading } from "@/components/app/shell";
 import { brl, formatDateBR, hhmm, todayISO, weekdayName } from "@/lib/date";
 import { bookingMessage } from "@/lib/messages";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -64,7 +65,7 @@ function AdminPage() {
   const [blockMotivo, setBlockMotivo] = useState("");
   const [newBooking, setNewBooking] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["agenda", date],
     queryFn: () => agendaFn({ data: { date } }),
     retry: false,
@@ -77,6 +78,8 @@ function AdminPage() {
       if (res?.ok) {
         toast.success("Atendimento atualizado.");
         qc.invalidateQueries({ queryKey: ["agenda"] });
+        qc.invalidateQueries({ queryKey: ["clients"] });
+        qc.invalidateQueries({ queryKey: ["client-detail"] });
       } else {
         toast.error(bookingMessage(res?.code));
       }
@@ -92,6 +95,7 @@ function AdminPage() {
         setBlockTime("");
         setBlockMotivo("");
         qc.invalidateQueries({ queryKey: ["agenda"] });
+        qc.invalidateQueries({ queryKey: ["availability"] });
       } else toast.error("Não foi possível bloquear esse horário.");
     },
   });
@@ -101,6 +105,7 @@ function AdminPage() {
     onSuccess: () => {
       toast.success("Bloqueio removido.");
       qc.invalidateQueries({ queryKey: ["agenda"] });
+      qc.invalidateQueries({ queryKey: ["availability"] });
     },
   });
 
@@ -130,7 +135,17 @@ function AdminPage() {
 
   return (
     <Screen>
-      <PageTitle eyebrow="Painel do barbeiro" title={date === todayISO() ? "Hoje" : formatDateBR(date)} />
+      <div className="flex items-end justify-between gap-3">
+        <PageTitle eyebrow="Painel do barbeiro" title={date === todayISO() ? "Hoje" : formatDateBR(date)} />
+        <button
+          onClick={() => refetch()}
+          disabled={isLoading}
+          aria-label="Atualizar"
+          className="focus-ring grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:text-gold disabled:opacity-50"
+        >
+          <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+        </button>
+      </div>
 
       <div className="mb-7 grid grid-cols-3 gap-2">
         {(["agenda", "clientes", "assinaturas"] as const).map((t) => (
@@ -204,6 +219,7 @@ function AdminPage() {
                 onDone={() => {
                   setNewBooking(false);
                   qc.invalidateQueries({ queryKey: ["agenda"] });
+                  qc.invalidateQueries({ queryKey: ["availability"] });
                 }}
               />
             ) : null}
