@@ -93,17 +93,21 @@ function AdminPage() {
         setBlockMotivo("");
         qc.invalidateQueries({ queryKey: ["agenda"] });
         qc.invalidateQueries({ queryKey: ["availability"] });
-      } else toast.error("Não foi possível bloquear esse horário.");
+      } else toast.error(bookingMessage(res?.code));
     },
+    onError: () => toast.error("Não foi possível bloquear esse horário."),
   });
 
   const unblock = useMutation({
     mutationFn: (id: string) => unblockFn({ data: { id } }),
-    onSuccess: () => {
-      toast.success("Bloqueio removido.");
-      qc.invalidateQueries({ queryKey: ["agenda"] });
-      qc.invalidateQueries({ queryKey: ["availability"] });
+    onSuccess: (res) => {
+      if (res?.ok) {
+        toast.success("Bloqueio removido.");
+        qc.invalidateQueries({ queryKey: ["agenda"] });
+        qc.invalidateQueries({ queryKey: ["availability"] });
+      } else toast.error("Não foi possível remover o bloqueio.");
     },
+    onError: () => toast.error("Não foi possível remover o bloqueio."),
   });
 
   if (isLoading && !data) {
@@ -191,7 +195,7 @@ function AdminPage() {
                   onClick={() => block.mutate()}
                   className="focus-ring shrink-0 rounded-full border border-gold/40 px-5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-gold disabled:opacity-50"
                 >
-                  Bloquear
+                  {block.isPending ? "..." : "Bloquear"}
                 </button>
               </div>
               <input
@@ -244,9 +248,10 @@ function AdminPage() {
                       </div>
                       <button
                         onClick={() => unblock.mutate(b.id)}
-                        className="focus-ring shrink-0 rounded-full border border-border px-3 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                        disabled={unblock.isPending}
+                        className="focus-ring shrink-0 rounded-full border border-border px-3 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground disabled:opacity-50"
                       >
-                        Liberar
+                        {unblock.isPending ? "..." : "Liberar"}
                       </button>
                     </div>
                   </div>
@@ -275,17 +280,19 @@ function AdminPage() {
                               if (confirm(`Concluir atendimento de ${a.cliente} (${a.servico})?`))
                                 act.mutate({ id: a.id, kind: "concluir" });
                             }}
-                            className="action-primary focus-ring flex-1"
+                            disabled={act.isPending}
+                            className="action-primary focus-ring flex-1 disabled:opacity-50"
                           >
-                            Concluir
+                            {act.isPending ? "..." : "Concluir"}
                           </button>
                           <button
                             onClick={() => {
                               if (confirm("Cancelar este atendimento?")) act.mutate({ id: a.id, kind: "cancelar" });
                             }}
-                            className="focus-ring flex-1 rounded-full border border-destructive/40 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-destructive"
+                            disabled={act.isPending}
+                            className="focus-ring flex-1 rounded-full border border-destructive/40 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-destructive disabled:opacity-50"
                           >
-                            Cancelar
+                            {act.isPending ? "..." : "Cancelar"}
                           </button>
                         </div>
                       ) : null}
@@ -335,9 +342,12 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
   const availabilityFn = useServerFn(getAvailability);
   const bookFn = useServerFn(adminCreateBooking);
 
-  const { data: clients } = useQuery({ queryKey: ["clients", ""], queryFn: () => clientsFn({ data: {} }) });
-  const { data: services } = useServices();
-  const { data: availability } = useQuery({
+  const { data: clients, isLoading: loadingClients } = useQuery({
+    queryKey: ["clients", ""],
+    queryFn: () => clientsFn({ data: {} }),
+  });
+  const { data: services, isLoading: loadingServices } = useServices();
+  const { data: availability, isLoading: loadingSlots } = useQuery({
     queryKey: ["availability", date],
     queryFn: () => availabilityFn({ data: { date } }),
   });
@@ -359,13 +369,20 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
   });
 
   const livres = (availability?.slots ?? []).filter((s) => s.available);
+  const isClosed = availability?.closed;
 
   return (
     <div className="panel mt-3 space-y-4 p-5">
       <div className="space-y-2">
         <label className="eyebrow" htmlFor="cli">Cliente</label>
-        <select id="cli" value={clienteId} onChange={(e) => setClienteId(e.target.value)} className={fieldClass}>
-          <option value="">Selecione</option>
+        <select
+          id="cli"
+          value={clienteId}
+          onChange={(e) => setClienteId(e.target.value)}
+          disabled={loadingClients}
+          className={fieldClass}
+        >
+          <option value="">{loadingClients ? "Carregando..." : "Selecione"}</option>
           {(clients ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.nome}
@@ -375,8 +392,14 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
       </div>
       <div className="space-y-2">
         <label className="eyebrow" htmlFor="srv">Serviço</label>
-        <select id="srv" value={serviceId} onChange={(e) => setServiceId(e.target.value)} className={fieldClass}>
-          <option value="">Selecione</option>
+        <select
+          id="srv"
+          value={serviceId}
+          onChange={(e) => setServiceId(e.target.value)}
+          disabled={loadingServices}
+          className={fieldClass}
+        >
+          <option value="">{loadingServices ? "Carregando..." : "Selecione"}</option>
           {(services ?? []).map((s: any) => (
             <option key={s.id} value={s.id}>
               {s.nome} — {brl(Number(s.preco))}
@@ -386,22 +409,36 @@ function NewBookingForm({ date, onDone }: { date: string; onDone: () => void }) 
       </div>
       <div className="space-y-2">
         <label className="eyebrow" htmlFor="hr">Horário livre em {formatDateBR(date)}</label>
-        <select id="hr" value={time} onChange={(e) => setTime(e.target.value)} className={fieldClass}>
-          <option value="">Selecione</option>
+        <select
+          id="hr"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          disabled={loadingSlots || isClosed || livres.length === 0}
+          className={fieldClass}
+        >
+          <option value="">
+            {loadingSlots
+              ? "Carregando..."
+              : isClosed
+                ? "Barbearia fechada"
+                : livres.length === 0
+                  ? "Sem horários livres"
+                  : "Selecione"}
+          </option>
           {livres.map((s) => (
             <option key={s.time} value={s.time}>
               {s.time}
             </option>
           ))}
         </select>
-        {availability?.closed ? <p className="text-xs text-muted-foreground">Barbearia fechada nesta data.</p> : null}
+        {isClosed ? <p className="text-xs text-muted-foreground">Barbearia fechada nesta data.</p> : null}
       </div>
       <button
         disabled={!clienteId || !serviceId || !time || create.isPending}
         onClick={() => create.mutate()}
         className="action-primary focus-ring w-full disabled:opacity-50"
       >
-        Confirmar agendamento
+        {create.isPending ? "Criando..." : "Confirmar agendamento"}
       </button>
     </div>
   );
@@ -469,7 +506,7 @@ function ClientsTab({ onOpen }: { onOpen: (id: string) => void }) {
             onClick={() => create.mutate()}
             className="action-primary focus-ring w-full disabled:opacity-50"
           >
-            Cadastrar cliente
+            {create.isPending ? "Cadastrando..." : "Cadastrar cliente"}
           </button>
         </div>
       ) : null}
@@ -501,9 +538,10 @@ function ClientsTab({ onOpen }: { onOpen: (id: string) => void }) {
 function ClientDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const detailFn = useServerFn(getClientDetail);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["client-detail", id],
     queryFn: () => detailFn({ data: { id } }),
+    retry: false,
   });
 
   return (
@@ -517,6 +555,8 @@ function ClientDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {isLoading ? (
         <Loading />
+      ) : error ? (
+        <EmptyState title="Erro ao carregar" description="Tente novamente em instantes." />
       ) : !data?.profile ? (
         <EmptyState title="Cliente não encontrado" />
       ) : (
