@@ -85,7 +85,8 @@ export function MonthCalendar({
         ))}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const iso = dateToISO(new Date(cursor.year, cursor.month, i + 1));
-          const disabled = iso < today || iso > limit;
+          const isSunday = new Date(cursor.year, cursor.month, i + 1).getDay() === 0;
+          const disabled = iso < today || iso > limit || isSunday;
           const selected = iso === value;
           return (
             <button

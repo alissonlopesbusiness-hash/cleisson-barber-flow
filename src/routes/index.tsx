@@ -75,7 +75,7 @@ function Index() {
             <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
             <div className="min-w-0">
               <p>Segunda a sexta — 09:00 às 19:00</p>
-              <p className="mt-1 text-muted-foreground">Sábado e domingo — 09:00 às 19:30</p>
+              <p className="mt-1 text-muted-foreground">Sábado — 09:00 às 19:30</p>
             </div>
           </div>
           <div className="flex items-start gap-3 border-t border-border/70 pt-3">
