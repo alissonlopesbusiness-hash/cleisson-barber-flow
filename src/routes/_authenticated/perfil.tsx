@@ -95,7 +95,7 @@ function PerfilPage() {
           </button>
         </div>
 
-        {data && !data.isAdmin && !data.adminExists ? (
+        {data && !data.isStaff && !data.staffExists ? (
           <button
             onClick={() => claim.mutate()}
             className="panel focus-ring mt-6 w-full p-4 text-left text-sm font-semibold text-gold"

@@ -67,7 +67,7 @@ function ContaPage() {
       <Screen>
         <PageTitle eyebrow={data?.nome ? `Olá, ${data.nome.split(" ")[0]}` : "Área do cliente"} title="Meus horários" />
 
-        {data?.isAdmin ? (
+        {data?.isStaff ? (
           <Link to="/admin" className="panel focus-ring mb-6 block p-4 text-sm font-semibold text-gold">
             Abrir painel do barbeiro →
           </Link>

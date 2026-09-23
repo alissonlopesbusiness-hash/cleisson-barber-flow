@@ -18,8 +18,9 @@ export type MyAccount = {
   nome: string;
   email: string | null;
   telefone: string | null;
+  isStaff: boolean;
   isAdmin: boolean;
-  adminExists: boolean;
+  staffExists: boolean;
   appointments: MyAppointment[];
 };
 
@@ -45,7 +46,7 @@ export const getMyAccount = createServerFn({ method: "POST" })
 
     const [{ data: roles }, { count: adminCount }, { data: appts }] = await Promise.all([
       supabaseAdmin.from("user_roles").select("role").eq("user_id", userId),
-      supabaseAdmin.from("user_roles").select("id", { count: "exact", head: true }).eq("role", "admin"),
+      supabaseAdmin.from("user_roles").select("id", { count: "exact", head: true }).in("role", ["admin", "barber"]),
       supabaseAdmin
         .from("appointments")
         .select("id, data, hora_inicio, hora_fim, status, tipo_atendimento, preco, services(nome)")
@@ -60,8 +61,9 @@ export const getMyAccount = createServerFn({ method: "POST" })
       nome: profile.nome,
       email: profile.email,
       telefone: profile.telefone,
+      isStaff: (roles ?? []).some((r: any) => r.role === "admin" || r.role === "barber"),
       isAdmin: (roles ?? []).some((r: any) => r.role === "admin"),
-      adminExists: (adminCount ?? 0) > 0,
+      staffExists: (staffCount ?? 0) > 0,
       appointments: (appts ?? []).map((a: any) => ({
         id: a.id,
         data: a.data,
@@ -157,11 +159,11 @@ export const claimBarberRole = createServerFn({ method: "POST" })
     const { count } = await supabaseAdmin
       .from("user_roles")
       .select("id", { count: "exact", head: true })
-      .eq("role", "admin");
+      .in("role", ["admin", "barber"]);
     if ((count ?? 0) > 0) return { ok: false as const, code: "ja_existe" };
     const { error } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: context.userId, role: "admin" });
+      .insert({ user_id: context.userId, role: "barber" });
     if (error) return { ok: false as const };
     return { ok: true as const };
   });
