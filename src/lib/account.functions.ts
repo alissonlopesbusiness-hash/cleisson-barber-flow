@@ -44,7 +44,7 @@ export const getMyAccount = createServerFn({ method: "POST" })
       profile = data;
     }
 
-    const [{ data: roles }, { count: adminCount }, { data: appts }] = await Promise.all([
+    const [{ data: roles }, { count: staffCount }, { data: appts }] = await Promise.all([
       supabaseAdmin.from("user_roles").select("role").eq("user_id", userId),
       supabaseAdmin.from("user_roles").select("id", { count: "exact", head: true }).in("role", ["admin", "barber"]),
       supabaseAdmin
