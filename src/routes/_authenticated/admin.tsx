@@ -55,6 +55,7 @@ function AdminPage() {
 
   const agendaFn = useServerFn(getAgendaDay);
   const completeFn = useServerFn(completeAppointment);
+  const confirmFn = useServerFn(confirmAppointment);
   const cancelFn = useServerFn(adminCancelAppointment);
   const blockFn = useServerFn(blockSlot);
   const unblockFn = useServerFn(unblockSlot);
