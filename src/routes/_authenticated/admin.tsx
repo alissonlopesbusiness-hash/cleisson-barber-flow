@@ -7,6 +7,7 @@ import { ArrowLeft, RefreshCw } from "lucide-react";
 import {
   getAgendaDay,
   completeAppointment,
+  confirmAppointment,
   adminCancelAppointment,
   listClients,
   blockSlot,
@@ -54,6 +55,7 @@ function AdminPage() {
 
   const agendaFn = useServerFn(getAgendaDay);
   const completeFn = useServerFn(completeAppointment);
+  const confirmFn = useServerFn(confirmAppointment);
   const cancelFn = useServerFn(adminCancelAppointment);
   const blockFn = useServerFn(blockSlot);
   const unblockFn = useServerFn(unblockSlot);
@@ -69,8 +71,8 @@ function AdminPage() {
   });
 
   const act = useMutation({
-    mutationFn: async ({ id, kind }: { id: string; kind: "concluir" | "cancelar" }) =>
-      kind === "concluir" ? completeFn({ data: { id } }) : cancelFn({ data: { id } }),
+    mutationFn: async ({ id, kind }: { id: string; kind: "concluir" | "cancelar" | "confirmar" }) =>
+      kind === "concluir" ? completeFn({ data: { id } }) : kind === "confirmar" ? confirmFn({ data: { id } }) : cancelFn({ data: { id } }),
     onSuccess: (res) => {
       if (res?.ok) {
         toast.success("Atendimento atualizado.");
@@ -272,7 +274,24 @@ function AdminPage() {
                       <StatusBadge status={a.status} />
                     </div>
                     <div className="mt-4 border-t border-border/70 pt-4">
-                      <p className="text-sm text-muted-foreground">{brl(Number(a.preco))}</p>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span>Horário: {hhmm(a.hora_inicio)}–{hhmm(a.hora_fim)}</span>
+                        <span className="text-right">{brl(Number(a.preco))}</span>
+                        <span>{a.tipo_atendimento === "assinatura" ? "Assinatura" : "Avulso"}</span>
+                        {a.telefone ? (
+                          <a href={`https://wa.me/55${a.telefone}`} target="_blank" rel="noreferrer" className="text-right text-gold">WhatsApp</a>
+                        ) : <span />}
+                        {a.observacao ? <span className="col-span-2">Obs: {a.observacao}</span> : null}
+                      </div>
+                      {a.status === "agendado" ? (
+                        <button
+                          onClick={() => act.mutate({ id: a.id, kind: "confirmar" })}
+                          disabled={act.isPending}
+                          className="focus-ring mt-4 w-full rounded-full border border-gold/50 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-gold disabled:opacity-50"
+                        >
+                          Confirmar atendimento
+                        </button>
+                      ) : null}
                       {a.status === "agendado" || a.status === "confirmado" ? (
                         <div className="mt-4 flex gap-2">
                           <button
