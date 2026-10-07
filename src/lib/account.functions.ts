@@ -46,7 +46,7 @@ export const getMyAccount = createServerFn({ method: "POST" })
 
     const [{ data: roles }, { count: staffCount }, { data: appts }] = await Promise.all([
       supabaseAdmin.from("user_roles").select("role").eq("user_id", userId),
-      supabaseAdmin.from("user_roles").select("id", { count: "exact", head: true }).in("role", ["admin", "barber"]),
+      supabaseAdmin.from("user_roles").select("id", { count: "exact", head: true }).in("role", ["admin"]),
       supabaseAdmin
         .from("appointments")
         .select("id, data, hora_inicio, hora_fim, status, tipo_atendimento, preco, services(nome)")
@@ -159,11 +159,11 @@ export const claimBarberRole = createServerFn({ method: "POST" })
     const { count } = await supabaseAdmin
       .from("user_roles")
       .select("id", { count: "exact", head: true })
-      .in("role", ["admin", "barber"]);
+      .in("role", ["admin"]);
     if ((count ?? 0) > 0) return { ok: false as const, code: "ja_existe" };
     const { error } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: context.userId, role: "barber" });
+      .insert({ user_id: context.userId, role: "admin" });
     if (error) return { ok: false as const };
     return { ok: true as const };
   });

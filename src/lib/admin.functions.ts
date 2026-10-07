@@ -11,7 +11,7 @@ async function adminClient(userId: string) {
     .from("user_roles")
     .select("id")
     .eq("user_id", userId)
-    .in("role", ["admin", "barber"])
+    .in("role", ["admin"])
     .maybeSingle();
   if (!data) throw new Error("Forbidden");
   return supabaseAdmin;
