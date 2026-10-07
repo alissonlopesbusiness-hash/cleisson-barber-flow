@@ -27,6 +27,8 @@ export type AgendaItem = {
   servico: string;
   cliente: string;
   cliente_id: string;
+  telefone: string | null;
+  observacao: string | null;
 };
 
 export type AgendaDay = {
@@ -47,6 +49,8 @@ function mapItem(a: any): AgendaItem {
     servico: a.services?.nome ?? "Serviço",
     cliente: a.profiles?.nome ?? "Cliente",
     cliente_id: a.cliente_id,
+    telefone: a.profiles?.telefone ?? null,
+    observacao: a.observacao ?? null,
   };
 }
 
@@ -59,7 +63,7 @@ export const getAgendaDay = createServerFn({ method: "POST" })
       supabase
         .from("appointments")
         .select(
-          "id, cliente_id, hora_inicio, hora_fim, status, tipo_atendimento, preco, services(nome), profiles(nome)",
+          "id, cliente_id, hora_inicio, hora_fim, status, tipo_atendimento, preco, observacao, services(nome), profiles(nome, telefone)",
         )
         .eq("data", data.date)
         .order("hora_inicio"),
@@ -89,6 +93,20 @@ export const completeAppointment = createServerFn({ method: "POST" })
     const { data: result, error } = await supabase.rpc("complete_appointment", { p_id: data.id });
     if (error) return { ok: false as const };
     return result as { ok: boolean; code?: string };
+  });
+
+export const confirmAppointment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const supabase = await adminClient(context.userId);
+    const { data: ap } = await supabase.from("appointments").select("status").eq("id", data.id).maybeSingle();
+    if (!ap) return { ok: false as const, code: "nao_encontrado" };
+    if (ap.status !== "agendado") return { ok: false as const, code: "transicao_invalida" };
+    const { error } = await supabase.from("appointments").update({ status: "confirmado" }).eq("id", data.id);
+    if (error) return { ok: false as const };
+    await supabase.from("appointment_history").insert({ appointment_id: data.id, status_anterior: "agendado", status_novo: "confirmado" });
+    return { ok: true as const };
   });
 
 export const adminCancelAppointment = createServerFn({ method: "POST" })
