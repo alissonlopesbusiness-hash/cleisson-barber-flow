@@ -156,7 +156,7 @@ function AuthPage() {
         </button>
       </form>
 
-      <Link to="/" className="focus-ring mt-6 block text-center text-sm text-muted-foreground">
+      <Link to="/" className="focus-ring mt-4 block py-3 text-center text-sm text-muted-foreground">
         Voltar ao início
       </Link>
     </Screen>

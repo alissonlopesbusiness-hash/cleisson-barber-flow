@@ -300,7 +300,7 @@ function AdminPage() {
                         <span className="text-right">{brl(Number(a.preco))}</span>
                         <span>{a.tipo_atendimento === "assinatura" ? "Assinatura" : "Avulso"}</span>
                         {a.telefone ? (
-                          <a href={`https://wa.me/55${a.telefone}`} target="_blank" rel="noreferrer" className="text-right text-gold">WhatsApp</a>
+                          <a href={`https://wa.me/55${a.telefone}`} target="_blank" rel="noreferrer" className="-my-2 inline-flex min-h-10 items-center justify-end py-2 text-right text-gold">WhatsApp</a>
                         ) : <span />}
                         {a.observacao ? <span className="col-span-2">Obs: {a.observacao}</span> : null}
                       </div>
@@ -347,7 +347,7 @@ function AdminPage() {
         <ClientsTab onOpen={setClientId} />
       )}
 
-      <Link to="/conta" className="focus-ring mt-9 block text-center text-sm text-muted-foreground">
+      <Link to="/conta" className="focus-ring mt-7 block py-3 text-center text-sm text-muted-foreground">
         Voltar para minha conta
       </Link>
     </Screen>
