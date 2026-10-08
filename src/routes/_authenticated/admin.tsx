@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, RefreshCw } from "lucide-react";
@@ -69,6 +69,27 @@ function AdminPage() {
     queryFn: () => agendaFn({ data: { date } }),
     retry: false,
   });
+
+  // Tempo real: o banco avisa o painel quando um agendamento é criado/alterado/removido.
+  // A RLS garante que só administradores recebem os eventos de todos os clientes.
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-appointments")
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, (payload) => {
+        qc.invalidateQueries({ queryKey: ["agenda"] });
+        qc.invalidateQueries({ queryKey: ["availability"] });
+        qc.invalidateQueries({ queryKey: ["clients"] });
+        qc.invalidateQueries({ queryKey: ["client-detail"] });
+        if (payload.eventType === "INSERT") {
+          const n = payload.new as { data?: string; hora_inicio?: string };
+          toast.success(`Novo agendamento${n.data ? ` · ${formatDateBR(n.data)}` : ""}${n.hora_inicio ? ` às ${hhmm(n.hora_inicio)}` : ""}`);
+        }
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   const act = useMutation({
     mutationFn: async ({ id, kind }: { id: string; kind: "concluir" | "cancelar" | "confirmar" }) =>
