@@ -85,8 +85,18 @@ function AdminPage() {
           toast.success(`Novo agendamento${n.data ? ` · ${formatDateBR(n.data)}` : ""}${n.hora_inicio ? ` às ${hhmm(n.hora_inicio)}` : ""}`);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        // Ao (re)conectar, recarrega do banco para não perder eventos ocorridos offline.
+        if (status === "SUBSCRIBED") qc.invalidateQueries({ queryKey: ["agenda"] });
+      });
+    const resync = () => {
+      if (document.visibilityState === "visible") qc.invalidateQueries({ queryKey: ["agenda"] });
+    };
+    window.addEventListener("online", resync);
+    document.addEventListener("visibilitychange", resync);
     return () => {
+      window.removeEventListener("online", resync);
+      document.removeEventListener("visibilitychange", resync);
       supabase.removeChannel(channel);
     };
   }, [qc]);

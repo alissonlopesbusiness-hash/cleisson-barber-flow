@@ -144,10 +144,14 @@ export const updateMyProfile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from("profiles")
       .update({ nome: data.nome, telefone: data.telefone.replace(/\D/g, "") })
       .eq("user_id", context.userId);
+    if (error) {
+      console.error("[updateMyProfile]", error.message);
+      throw new Error("Não foi possível salvar seus dados. Tente novamente.");
+    }
     return { ok: true as const };
   });
 
