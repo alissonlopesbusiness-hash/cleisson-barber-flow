@@ -1,0 +1,1 @@
+UPDATE public.business_hours SET ativo = false WHERE dia_semana = 0;
